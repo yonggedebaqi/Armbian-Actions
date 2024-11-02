@@ -81,7 +81,9 @@ jobs:
           git clone -q --single-branch --depth=1 --branch=${{ github.event.inputs.Version }} https://github.com/armbian/build.git build 
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
 
-          cd build/    
+          cd build/
+          rm -f patch/kernel/archive/rockchip64-6.11/rk3399-fix-pci-phy.patch
+          rm -f patch/kernel/archive/rockchip64-6.6/rk3399-fix-pci-phy.patch
           cp -f ${{ github.workspace }}/patch/T4/kernel-debs.sh lib/functions/compilation/
           cp -f ${{ github.workspace }}/patch/T4/kernel-make.sh lib/functions/compilation/
           cp -f ${{ github.workspace }}/patch/T4/general-fix-Kodi-sysinfo-CPU-information.patch patch/kernel/archive/rockchip64-6.11/
