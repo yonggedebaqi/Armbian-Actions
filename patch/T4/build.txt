@@ -1,0 +1,3 @@
+./compile.sh kernel BOARD=nanopct4 BRANCH=edge DEB_COMPRESS=xz
+
+./compile.sh build BOARD=nanopct4 BRANCH=edge BUILD_DESKTOP=no BUILD_MINIMAL=yes KERNEL_CONFIGURE=yes RELEASE=bookworm DEB_COMPRESS=xz
