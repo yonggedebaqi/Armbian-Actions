@@ -82,15 +82,23 @@ jobs:
           ln -sf /mnt/workdir/build $GITHUB_WORKSPACE/build
 
           cd build/
-          rm -f patch/kernel/archive/rockchip64-6.11/rk3399-fix-pci-phy.patch
-          rm -f patch/kernel/archive/rockchip64-6.6/rk3399-fix-pci-phy.patch
+          
           cp -f ${{ github.workspace }}/patch/T4/kernel-debs.sh lib/functions/compilation/
           cp -f ${{ github.workspace }}/patch/T4/kernel-make.sh lib/functions/compilation/
-          cp -f ${{ github.workspace }}/patch/T4/general-fix-Kodi-sysinfo-CPU-information.patch patch/kernel/archive/rockchip64-6.11/
-          cp -f ${{ github.workspace }}/patch/T4/general-fix-Kodi-sysinfo-CPU-information.patch patch/kernel/archive/rockchip64-6.6/
+          
+          # T4 Patch
+          rm -f patch/kernel/archive/rockchip64-6.11/rk3399-fix-pci-phy.patch
+          rm -f patch/kernel/archive/rockchip64-6.6/rk3399-fix-pci-phy.patch
+          cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.11/
+          cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.6/
           cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2.patch patch/kernel/archive/rockchip64-6.11/
           cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2.patch patch/kernel/archive/rockchip64-6.6/
           cp -f ${{ github.workspace }}/patch/T4/linux-rockchip64-edge.config config/kernel/
+          
+          # 5C Patch
+          cp -f ${{ github.workspace }}/patch/5C/linux-rk35xx-vendor.config config/kernel/
+          cp -f ${{ github.workspace }}/patch/5C/fix-CPU-information.patch patch/kernel/rk35xx-vendor-6.1/
+          
           ls -la
   
       - name: Compile Kernel 
