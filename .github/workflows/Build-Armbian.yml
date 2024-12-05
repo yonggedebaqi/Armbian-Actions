@@ -112,8 +112,8 @@ jobs:
 
           cp -f ${{ github.workspace }}/patch/fixdeb/* lib/functions/compilation/
           cp -f ${{ github.workspace }}/patch/fiximg/* lib/functions/configuration/
-          cp -f ${{ github.workspace }}/patch/config/* config/kernel/
-          cp -f ${{ github.workspace }}/patch/sbin/* packages/bsp/common/usr/sbin/
+          #cp -f ${{ github.workspace }}/patch/config/* config/kernel/
+          #cp -f ${{ github.workspace }}/patch/sbin/* packages/bsp/common/usr/sbin/
           cp -f ${{ github.workspace }}/patch/VERSION ./
 
           # T4 Patch
@@ -126,14 +126,14 @@ jobs:
           cp -f ${{ github.workspace }}/patch/T4/rockchip64_common.inc config/sources/families/include/
           
           # 5C Patch
-          cp -f ${{ github.workspace }}/patch/5C/rock-5c.conf config/boards/
-          cp -f ${{ github.workspace }}/patch/5C/reopen_disabled_nodes.patch patch/u-boot/legacy/u-boot-radxa-rk35xx/board_rock-5c/
-          cp -f ${{ github.workspace }}/patch/5C/fix-CPU-information.patch patch/kernel/rk35xx-vendor-6.1/
-          cp -f ${{ github.workspace }}/patch/5C/diyfan.patch patch/kernel/rk35xx-vendor-6.1/
+          #cp -f ${{ github.workspace }}/patch/5C/rock-5c.conf config/boards/
+          #cp -f ${{ github.workspace }}/patch/5C/reopen_disabled_nodes.patch patch/u-boot/legacy/u-boot-radxa-rk35xx/board_rock-5c/
+          #cp -f ${{ github.workspace }}/patch/5C/fix-CPU-information.patch patch/kernel/rk35xx-vendor-6.1/
+          #cp -f ${{ github.workspace }}/patch/5C/diyfan.patch patch/kernel/rk35xx-vendor-6.1/
 
           # N1 Patch
-          cp -f ${{ github.workspace }}/patch/N1/* patch/kernel/archive/meson64-6.6/
-          cp -f ${{ github.workspace }}/patch/N1/* patch/kernel/archive/meson64-6.12/
+          #cp -f ${{ github.workspace }}/patch/N1/* patch/kernel/archive/meson64-6.6/
+          #cp -f ${{ github.workspace }}/patch/N1/* patch/kernel/archive/meson64-6.12/
           
           ls -la
   
