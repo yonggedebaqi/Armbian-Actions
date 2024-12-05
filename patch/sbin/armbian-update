@@ -40,7 +40,8 @@ get_latest_version() {
     CURRENT_MAJOR_MINOR=$(echo "$CURRENT_KERNEL" | grep -oP '^[0-9]+\.[0-9]+')
 
     # 获取版本信息
-	versions=$(curl -fsSL "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
+    versions=$(curl -fsSL --retry 3 --retry-delay 3 "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
+
     # 检查是否成功获取版本信息
     if [[ $? -ne 0 ]]; then
         echo -e "${ERROR} 无法访问 API，检查网络连接或 API 地址。"
@@ -72,7 +73,7 @@ get_latest_version() {
 # 函数：列出所有同系列内核版本
 list_all_versions() {
     # 获取版本信息
-	versions=$(curl -fsSL "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
+    versions=$(curl -fsSL --retry 3 --retry-delay 3 "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
 
     # 检查是否成功获取版本信息
     if [[ $? -ne 0 ]]; then
@@ -98,33 +99,33 @@ list_all_versions() {
         exit 1
     fi
 
-	columns=()
+    columns=()
 
-	# 筛选内核版本（前五）
-	column1=$(echo "$all_versions" | grep '^6\.1\.' | head -n 5)
-	column2=$(echo "$all_versions" | grep '^6\.6\.' | head -n 5)
-	column3=$(echo "$all_versions" | grep '^6\.11\.' | head -n 5)
-	column4=$(echo "$all_versions" | grep '^6\.12\.' | head -n 5)
+    # 筛选内核版本（前五）
+    column1=$(echo "$all_versions" | grep '^6\.1\.' | head -n 5)
+    column2=$(echo "$all_versions" | grep '^6\.6\.' | head -n 5)
+    column3=$(echo "$all_versions" | grep '^6\.11\.' | head -n 5)
+    column4=$(echo "$all_versions" | grep '^6\.12\.' | head -n 5)
 
-	# 检查每列是否为空，如果不为空则加入数组
-	[[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$(echo "$column1")")
-	[[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$(echo "$column2")")
-	[[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$(echo "$column3")")
-	[[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$(echo "$column4")")
+    # 检查每列是否为空，如果不为空则加入数组
+    [[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$(echo "$column1")")
+    [[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$(echo "$column2")")
+    [[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$(echo "$column3")")
+    [[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$(echo "$column4")")
 
-	# 确保所有列对齐
-	max_lines=$(printf "%s\n" "${columns[@]}" | wc -l)
-	for i in "${!columns[@]}"; do
-		columns[$i]=$(echo "${columns[$i]}" | awk -v max=$max_lines '{printf "%s\n", $0} END {for (i=NR; i<max; i++) print ""}')
-	done
+    # 确保所有列对齐
+    max_lines=$(printf "%s\n" "${columns[@]}" | wc -l)
+    for i in "${!columns[@]}"; do
+        columns[$i]=$(echo "${columns[$i]}" | awk -v max=$max_lines '{printf "%s\n", $0} END {for (i=NR; i<max; i++) print ""}')
+    done
 
-	# 使用动态列构建 paste 命令
-	echo -e "${INFO} 内核列表:"
-	# paste -d ' ' <(echo "${columns[0]}") <(echo "${columns[1]}") <(echo "${columns[2]}") <(echo "${columns[3]}") | awk -v info="${VERSION}" '{print info, $0}'
-	paste -d ' ' <(echo "${columns[0]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[1]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[2]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[3]}" | awk '{print "\033[92m" $0 "\033[0m"}') | awk -v info="${VERSION}" '{print info, $0}'
+    # 使用动态列构建 paste 命令
+    echo -e "${INFO} 内核列表:"
+    # paste -d ' ' <(echo "${columns[0]}") <(echo "${columns[1]}") <(echo "${columns[2]}") <(echo "${columns[3]}") | awk -v info="${VERSION}" '{print info, $0}'
+    paste -d ' ' <(echo "${columns[0]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
+                 <(echo "${columns[1]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
+                 <(echo "${columns[2]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
+                 <(echo "${columns[3]}" | awk '{print "\033[92m" $0 "\033[0m"}') | awk -v info="${VERSION}" '{print info, $0}'
 }
 
 # 函数：安装包
