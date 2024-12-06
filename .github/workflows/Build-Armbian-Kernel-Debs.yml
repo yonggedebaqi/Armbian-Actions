@@ -1,4 +1,4 @@
-name: Build-Armbian-Test
+name: Build-Armbian-Kernel-Debs
   
 on:  
   workflow_dispatch:  
@@ -188,6 +188,9 @@ jobs:
             KERNEL_VERSION=$(echo "$file" | cut -d '_' -f 5 | cut -d '-' -f 1)
             echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
             echo "Extracted KERNEL_VERSION: $KERNEL_VERSION"
+            BOARDFAMILY=$(echo "$file" | cut -d '-' -f 3- | cut -d '_' -f 1)
+            echo "BOARDFAMILY=$BOARDFAMILY" >> $GITHUB_ENV
+            echo "Extracted BOARDFAMILY: $BOARDFAMILY"
             
           else
             echo "No matching file found. Available files are:"
@@ -214,6 +217,39 @@ jobs:
             ### Armbian Debs Packages  
             - Usage method: After unzipping, install the deb packages in order
             - Packages include: armbian-bsp-cli | armbian-config | armbian-firmware | base-files | linux-dtb | linux-headers | linux-image | linux-libc-dev
+          draft: false  
+          prerelease: false
+          
+      - name: Prepare Kernel  
+        run: | 
+          cd "${GITHUB_WORKSPACE}/build/output/debs/"          
+          matching_files_array=($(ls linux-dtb* linux-headers* linux-image* linux-libc* 2>/dev/null))
+          
+          if [ ${#matching_files_array[@]} -gt 0 ]; then
+            tar -czf "../kernel-${KERNEL_VERSION}-${BOARDFAMILY}.tar.gz" "${matching_files_array[@]}"
+            echo "Compressed matching files to kernel-${KERNEL_VERSION}-${BOARDFAMILY}.tar.gz"
+          else
+            echo "No matching files found for compression."
+            exit 1
+          fi
+          
+          tar -tzf "../kernel-${KERNEL_VERSION}-${BOARDFAMILY}.tar.gz" || { echo "Failed to create valid tar.gz file"; exit 1; }
+
+      - name: Upload Kernel Packages to Release  
+        if: success()  
+        uses: ncipollo/release-action@main  
+        with:  
+          tag: "Armbian-Kernel"
+          name: "Armbian-Kernel"
+          artifacts: "${{ github.workspace }}/build/output/kernel-${{ env.KERNEL_VERSION }}-${{ env.BOARDFAMILY }}.tar.gz"  
+          allowUpdates: true  
+          removeArtifacts: false  
+          replacesArtifacts: true  
+          token: ${{ secrets.GH_TOKEN }}  
+          body: |  
+            ### Armbian Kernel Packages  
+            - Usage method: After unzipping, install the deb packages in order
+            - Packages include: linux-dtb | linux-headers | linux-image | linux-libc-dev
           draft: false  
           prerelease: false
 
