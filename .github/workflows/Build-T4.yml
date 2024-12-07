@@ -115,8 +115,8 @@ jobs:
           rm -f patch/kernel/archive/rockchip64-6.6/rk3399-fix-pci-phy.patch
           cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.12/
           cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.6/
-          cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2-6.12.patch patch/kernel/archive/rockchip64-6.12/
-          cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2.patch patch/kernel/archive/rockchip64-6.6/
+          cp -f ${{ github.workspace }}/patch/T4/t4-6.12.patch patch/kernel/archive/rockchip64-6.12/
+          cp -f ${{ github.workspace }}/patch/T4/t4.patch patch/kernel/archive/rockchip64-6.6/
           cp -f ${{ github.workspace }}/patch/T4/rockchip64_common.inc config/sources/families/include/
           ls -la
   
