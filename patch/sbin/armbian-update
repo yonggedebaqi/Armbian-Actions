@@ -134,7 +134,7 @@ list_all_versions() {
     done
 
     # 输出内核版本列表，确保对齐
-    echo -e "${INFO} 内核列表:"
+    # echo -e "${INFO} 内核列表:"
 
     # 逐行输出，每列的版本号，并在前面加上 VERSION，版本号为绿色
     for i in $(seq 1 $max_lines); do
