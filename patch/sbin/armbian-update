@@ -108,24 +108,51 @@ list_all_versions() {
     column4=$(echo "$all_versions" | grep '^6\.12\.' | head -n 5)
 
     # 检查每列是否为空，如果不为空则加入数组
-    [[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$(echo "$column1")")
-    [[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$(echo "$column2")")
-    [[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$(echo "$column3")")
-    [[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$(echo "$column4")")
+    [[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$column1")
+    [[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$column2")
+    [[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$column3")
+    [[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$column4")
 
-    # 确保所有列对齐
-    max_lines=$(printf "%s\n" "${columns[@]}" | wc -l)
-    for i in "${!columns[@]}"; do
-        columns[$i]=$(echo "${columns[$i]}" | awk -v max=$max_lines '{printf "%s\n", $0} END {for (i=NR; i<max; i++) print ""}')
+    # 计算每列的最大宽度
+    max_width=0
+    for column in "${columns[@]}"; do
+        for version in $column; do
+            len=${#version}
+            if (( len > max_width )); then
+                max_width=$len
+            fi
+        done
     done
 
-    # 使用动态列构建 paste 命令
+    # 计算所有列中的最大行数
+    max_lines=0
+    for column in "${columns[@]}"; do
+        num_lines=$(echo "$column" | wc -l)
+        if (( num_lines > max_lines )); then
+            max_lines=$num_lines
+        fi
+    done
+
+    # 输出内核版本列表，确保对齐
     echo -e "${INFO} 内核列表:"
-    # paste -d ' ' <(echo "${columns[0]}") <(echo "${columns[1]}") <(echo "${columns[2]}") <(echo "${columns[3]}") | awk -v info="${VERSION}" '{print info, $0}'
-    paste -d ' ' <(echo "${columns[0]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-                 <(echo "${columns[1]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-                 <(echo "${columns[2]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-                 <(echo "${columns[3]}" | awk '{print "\033[92m" $0 "\033[0m"}') | awk -v info="${VERSION}" '{print info, $0}'
+
+    # 逐行输出，每列的版本号，并在前面加上 VERSION，版本号为绿色
+    for i in $(seq 1 $max_lines); do
+        # 提取每列的第 i 行，如果该列没有内容则输出空格
+        col1=$(echo "${columns[0]}" | sed -n "${i}p")
+        col2=$(echo "${columns[1]}" | sed -n "${i}p")
+        col3=$(echo "${columns[2]}" | sed -n "${i}p")
+        col4=$(echo "${columns[3]}" | sed -n "${i}p")
+
+        # 如果某列为空，则显示空格
+        col1="${col1:-}"
+        col2="${col2:-}"
+        col3="${col3:-}"
+        col4="${col4:-}"
+
+        # 使用 printf 来格式化输出，确保每列对齐，同时在每个版本号上加上绿色
+        printf "${VERSION} \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m\n" "$col1" "$col2" "$col3" "$col4"
+    done
 }
 
 # 函数：安装包
