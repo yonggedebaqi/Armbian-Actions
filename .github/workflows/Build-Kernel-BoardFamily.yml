@@ -93,8 +93,8 @@ jobs:
           rm -f patch/kernel/archive/rockchip64-6.6/rk3399-fix-pci-phy.patch
           cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.12/
           cp -f ${{ github.workspace }}/patch/T4/fix-CPU-information.patch patch/kernel/archive/rockchip64-6.6/
-          cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2-6.12.patch patch/kernel/archive/rockchip64-6.12/
-          cp -f ${{ github.workspace }}/patch/T4/rk3399-t4-1.8-2.2.patch patch/kernel/archive/rockchip64-6.6/
+          cp -f ${{ github.workspace }}/patch/T4/t4-6.12.patch patch/kernel/archive/rockchip64-6.12/
+          cp -f ${{ github.workspace }}/patch/T4/t4.patch patch/kernel/archive/rockchip64-6.6/
           
           # 5C Patch
           cp -f ${{ github.workspace }}/patch/5C/fix-CPU-information.patch patch/kernel/rk35xx-vendor-6.1/
@@ -170,3 +170,10 @@ jobs:
           delete_workflows: true
           workflows_keep_day: 3
           gh_token: ${{ secrets.GH_TOKEN }}
+          
+      - name: Telegram notification
+        run: |
+          MSG="
+          ${{ env.KERNEL_VERSION }}-${{ env.BOARDFAMILY }} 编译完成！
+          "
+          curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" -d "chat_id=${{ secrets.TELEGRAM_TO }}&text=${MSG}"

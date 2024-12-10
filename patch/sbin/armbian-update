@@ -20,7 +20,7 @@ usage() {
     echo -e "${INFO} 使用方法: [-k] [-l] [-h]"
     echo -e "${INFO} 参数说明:"
     echo -e "${INFO}   -k <version>  指定要安装的内核版本，格式为 x.y.z"
-    echo -e "${INFO}   -l            显示仓库内核版本列表"
+    echo -e "${INFO}   -l            显示仓库内核版本列表（前五）"
     echo -e "${INFO}   -h            显示此帮助信息"
     exit 0
 }
@@ -39,8 +39,8 @@ get_latest_version() {
     # 获取当前内核的主版本号和次版本号
     CURRENT_MAJOR_MINOR=$(echo "$CURRENT_KERNEL" | grep -oP '^[0-9]+\.[0-9]+')
 
-    # 从 API 获取版本信息
-    versions=$(curl -s "https://api.github.com/repos/Zane-E/Armbian-Actions/releases/tags/Armbian-Kernel")
+    # 获取版本信息
+    versions=$(curl -fsSL --retry 3 --retry-delay 3 "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
 
     # 检查是否成功获取版本信息
     if [[ $? -ne 0 ]]; then
@@ -50,7 +50,7 @@ get_latest_version() {
 
     # 筛选同系列内核版本
     filtered_versions=$(echo "$versions" | \
-        grep -oP '"name": "kernel-\K[0-9]+\.[0-9]+\.[0-9]+-[a-z]+-('"${LINUXFAMILY}"')\.tar\.gz' | \
+        grep -oP '>kernel-\K[0-9]+\.[0-9]+\.[0-9]+-[a-z]+-('"${LINUXFAMILY}"')\.tar\.gz<' | \
         grep "${CURRENT_MAJOR_MINOR}")
 
     # 检查是否找到同系列内核版本
@@ -72,11 +72,8 @@ get_latest_version() {
 
 # 函数：列出所有同系列内核版本
 list_all_versions() {
-    # 获取当前内核的主版本号和次版本号
-    CURRENT_MAJOR_MINOR=$(echo "$CURRENT_KERNEL" | grep -oP '^[0-9]+\.[0-9]+')
-
-    # 从 API 获取版本信息
-    versions=$(curl -s "https://api.github.com/repos/Zane-E/Armbian-Actions/releases/tags/Armbian-Kernel")
+    # 获取版本信息
+    versions=$(curl -fsSL --retry 3 --retry-delay 3 "https://github.com/Zane-E/Armbian-Actions/releases/expanded_assets/Armbian-Kernel")
 
     # 检查是否成功获取版本信息
     if [[ $? -ne 0 ]]; then
@@ -84,18 +81,13 @@ list_all_versions() {
         exit 1
     fi
 
-    # 筛选同系列内核版本
-    # filtered_versions=$(echo "$versions" | \
-        # grep -oP '"name": "kernel-\K[0-9]+\.[0-9]+\.[0-9]+-[a-z]+-('"${LINUXFAMILY}"')\.tar\.gz' | \
-        # grep "${CURRENT_MAJOR_MINOR}")
-
     # 筛选内核版本
     filtered_versions=$(echo "$versions" | \
-        grep -oP '"name": "kernel-\K[0-9]+\.[0-9]+\.[0-9]+-[a-z]+-('"${LINUXFAMILY}"')\.tar\.gz')
+        grep -oP '>kernel-\K[0-9]+\.[0-9]+\.[0-9]+-[a-z]+-('"${LINUXFAMILY}"')\.tar\.gz<')
 
     # 检查是否找到同系列内核版本
     if [[ -z "$filtered_versions" ]]; then
-        echo -e "${ERROR} 未找到与当前内核版本相同系列的内核。"
+        echo -e "${ERROR} 未找到相同系列的内核版本。"
         exit 1
     fi
 
@@ -107,33 +99,60 @@ list_all_versions() {
         exit 1
     fi
 
-	columns=()
+    columns=()
 
-	# 筛选内核版本（前五）
-	column1=$(echo "$all_versions" | grep '^6\.1\.' | head -n 5)
-	column2=$(echo "$all_versions" | grep '^6\.6\.' | head -n 5)
-	column3=$(echo "$all_versions" | grep '^6\.11\.' | head -n 5)
-	column4=$(echo "$all_versions" | grep '^6\.12\.' | head -n 5)
+    # 筛选内核版本（前五）
+    column1=$(echo "$all_versions" | grep '^6\.1\.' | head -n 5)
+    column2=$(echo "$all_versions" | grep '^6\.6\.' | head -n 5)
+    column3=$(echo "$all_versions" | grep '^6\.11\.' | head -n 5)
+    column4=$(echo "$all_versions" | grep '^6\.12\.' | head -n 5)
 
-	# 检查每列是否为空，如果不为空则加入数组
-	[[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$(echo "$column1")")
-	[[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$(echo "$column2")")
-	[[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$(echo "$column3")")
-	[[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$(echo "$column4")")
+    # 检查每列是否为空，如果不为空则加入数组
+    [[ -n "$(echo "$column1" | grep -v '^$')" ]] && columns+=("$column1")
+    [[ -n "$(echo "$column2" | grep -v '^$')" ]] && columns+=("$column2")
+    [[ -n "$(echo "$column3" | grep -v '^$')" ]] && columns+=("$column3")
+    [[ -n "$(echo "$column4" | grep -v '^$')" ]] && columns+=("$column4")
 
-	# 确保所有列对齐
-	max_lines=$(printf "%s\n" "${columns[@]}" | wc -l)
-	for i in "${!columns[@]}"; do
-		columns[$i]=$(echo "${columns[$i]}" | awk -v max=$max_lines '{printf "%s\n", $0} END {for (i=NR; i<max; i++) print ""}')
-	done
+    # 计算每列的最大宽度
+    max_width=0
+    for column in "${columns[@]}"; do
+        for version in $column; do
+            len=${#version}
+            if (( len > max_width )); then
+                max_width=$len
+            fi
+        done
+    done
 
-	# 使用动态列构建 paste 命令
-	echo -e "${INFO} 内核列表:"
-	# paste -d ' ' <(echo "${columns[0]}") <(echo "${columns[1]}") <(echo "${columns[2]}") <(echo "${columns[3]}") | awk -v info="${VERSION}" '{print info, $0}'
-	paste -d ' ' <(echo "${columns[0]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[1]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[2]}" | awk '{print "\033[92m" $0 "\033[0m"}') \
-		         <(echo "${columns[3]}" | awk '{print "\033[92m" $0 "\033[0m"}') | awk -v info="${VERSION}" '{print info, $0}'
+    # 计算所有列中的最大行数
+    max_lines=0
+    for column in "${columns[@]}"; do
+        num_lines=$(echo "$column" | wc -l)
+        if (( num_lines > max_lines )); then
+            max_lines=$num_lines
+        fi
+    done
+
+    # 输出内核版本列表，确保对齐
+    # echo -e "${INFO} 内核列表:"
+
+    # 逐行输出，每列的版本号，并在前面加上 VERSION，版本号为绿色
+    for i in $(seq 1 $max_lines); do
+        # 提取每列的第 i 行，如果该列没有内容则输出空格
+        col1=$(echo "${columns[0]}" | sed -n "${i}p")
+        col2=$(echo "${columns[1]}" | sed -n "${i}p")
+        col3=$(echo "${columns[2]}" | sed -n "${i}p")
+        col4=$(echo "${columns[3]}" | sed -n "${i}p")
+
+        # 如果某列为空，则显示空格
+        col1="${col1:-}"
+        col2="${col2:-}"
+        col3="${col3:-}"
+        col4="${col4:-}"
+
+        # 使用 printf 来格式化输出，确保每列对齐，同时在每个版本号上加上绿色
+        printf "${VERSION} \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m \033[92m%-${max_width}s\033[0m\n" "$col1" "$col2" "$col3" "$col4"
+    done
 }
 
 # 函数：安装包
@@ -143,7 +162,7 @@ install_package() {
     if [[ -n "$DEB_FILE" ]]; then
         dpkg -i "$DEB_FILE" > /dev/null 2>&1
         if [[ $? -ne 0 ]]; then
-            echo -e "${ERROR} 安装 ${pkg} 失败！尝试更新包列表并修复依赖..."
+            echo -e "${ERROR} 安装 ${pkg} 失败！正在尝试更新包列表并修复依赖..."
             apt-get update > /dev/null 2>&1
             apt-get -f install -y > /dev/null 2>&1
             if [[ $? -ne 0 ]]; then
